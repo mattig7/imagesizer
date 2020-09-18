@@ -1,6 +1,6 @@
 #! /usr/env/python3
 """
-imagesizer.py newWidth[, directory]
+imagesizer.py
 Program designed to resize images in bulk from a specified directory. Defaults to the current directory if none is specified.
 The newWidth parameter should be an integer. The directory parameter can be relative or absolute, and is optional
 
@@ -9,71 +9,64 @@ The newWidth parameter should be an integer. The directory parameter can be rela
 import os, sys
 import logging
 from pathlib import Path
+import argparse
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s: %(message)s')
+#logger.basicConfig(level=logger.DEBUG, format='%(asctime)s - %(levelname)s: %(message)s')
+
+logfile = Path.home()/Path('.imagesizer/imagesizer.log')
+desiredLogLevel = logging.DEBUG
+
+logger = logging.getLogger('Logger for image sizer program')
+logger.setLevel(logging.DEBUG)
+
+logFormatter = logging.Formatter('%(asctime)s - %(levelname)s: %(message)s')
+
+streamHandler = logging.StreamHandler()
+streamHandler.setLevel(desiredLogLevel)
+streamHandler.setFormatter(logFormatter)
+
+fileHandler = logging.FileHandler(filename=logfile, mode='w')
+fileHandler.setLevel(desiredLogLevel)
+fileHandler.setFormatter(logFormatter)
+
+logger.addHandler(streamHandler)
+logger.addHandler(fileHandler)
+
+logger.debug(f"Logging has been established")
+
 
 try:
-   from PIL import Image
+    from PIL import Image
 except ModuleNotFoundError as e:
-   logging.debug(f"Error trying to import Pillow Image module: {str(e)}.\nHave you installed it?\nTry: pip3 install Pillow")
-   sys.exit(1)
+    logger.debug(f"Error trying to import Pillow Image module: {str(e)}.\nHave you installed it?\nTry: pip3 install Pillow")
+    sys.exit(1)
 
-logging.debug("Importing complete, Starting program")
+logger.debug("Importing complete, Starting parser setup.")
 
-def usage():
-   """
-   Function to print the correct usage and quit. Invoked when user error is made.
-   """
-   logging.critical(f"Usage: imagesizer.py newWidth [, directory]")
-   sys.exit(1)
+parser = argparse.ArgumentParser(description='Find all images in a directory and resize them into a new directory')
 
-def getArguments(argv=None):
-   """
-   Function to pull out the arguments provided to the function and provide input validation.
-   """
-   logging.debug(f"Commencing 'getArguments' function")
-   logging.debug(f"At this point, __name__ is {__name__}")
-   directoryPath = Path('.')
-   logging.debug(f"The length of argv is {len(argv)}")
-   if len(argv) < 2:
-      logging.debug(f"Printing usage as arguments passed were insufficient: {str(argv)}")
-      usage()
-   
-   elif len(argv) > 2:
-      directoryPath = Path(argv[2])
-      logging.debug(f"There where more than 2 arguments. Setting the directory path as {directoryPath}")
-      if len(argv) > 3:
-         logging.debug(f"Printing usage as there were more than 3 arguments: {argv}")
-         usage()
-   logging.debug("Attempting to extract the new width")
-   try:
-      #TODO: Strip a comma off the end of the next value. Python includes the comma with this argument, or the next argument depending on how you do it. Perhaps split it off the first and last (as well as spaces) char of all arguments.
-      newWidth = int(argv[1])
-      logging.debug(f"The extracted new width is {newWidth}.")
-   except ValueError as e:
-      logging.debug(f"Printing usage as the first argument was not an int: {argv[1]}")
-      usage() 
-   
-   logging.debug(f"Finished getArguments function and returning {(newWidth, directoryPath)}")
-   return (newWidth, directoryPath)
-
-def main():
-   """
-   main function
-   """
-   logging.debug("Beginning Main method")
-
-   logging.debug(f"Calling getArguments function with input: {str(sys.argv)}")
-   newWidth, directoryPath = getArguments(sys.argv)
-   logging.debug(f"Main function shows newWidth={newWidth} and directoryPath={directoryPath}")
-
-
-   #TODO: Step through all files within the directory path. If they are images, resize them with new width (maintain aspect ratio, so write a function for the resizing. May need a function to test if something is an image too...)
-
-
-
-   logging.debug("Finished Main method")
+parser.add_argument('--source_dir', help='The directory to search for images', default=Path.cwd())
+parser.add_argument('--dest_dir', help='The directory to put all of the resized images', default=Path.cwd()/Path('ResizedImages/'))
+parser.add_argument('-w', '--width', help='The width in pixels to make the new images. Aspect ratio is always maintained', type=int, metavar='W', default=750)
+parser.add_argument('-r', '--recursive', help='Whether to recursively search sub-directories from the main source directory or not', action='store_const', const=True, default=False)
 
 if __name__ == "__main__":
-    main()
+    """
+    main function
+    """
+    logger.debug("Beginning Main method")
+    
+    args = parser.parse_args()
+    logger.debug(f"Established arguments passed in as:\n{str(args)}")
+
+    #Step through all files within the directory path. If they are images, resize them with new width (maintain aspect ratio, so write a function for the resizing. May need a function to test if something is an image too...)
+
+    #for imagePath in directoryPath.glob('*')
+        
+        #Call function to create a new image based on the current imagefile
+
+    logger.debug("Finished Main method")
+
+
+
 
