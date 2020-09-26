@@ -3,7 +3,6 @@
 imagesizer.py
 Program designed to resize images in bulk from a specified directory. Defaults to the current directory if none is specified.
 
-
 """
 
 import os, sys
@@ -45,7 +44,7 @@ logger.debug("Importing complete, Starting argument parser setup.")
 parser = argparse.ArgumentParser(description='Find all images in a directory and resize them into a new directory')
 
 parser.add_argument('--source_dir', help='The directory to search for images', default=Path.cwd())
-parser.add_argument('--dest_dir', help='The directory to put all of the resized images', default=Path.cwd()/Path('ResizedImages/'))
+parser.add_argument('--dest_dir', help='The directory to put all of the resized images', default=None)
 parser.add_argument('-w', '--width', help='The width in pixels to make the new images. Aspect ratio is always maintained', type=int, metavar='W', default=720)
 parser.add_argument('-r', '--recursive', help='Whether to recursively search sub-directories from the main source directory or not', action='store_const', const=True, default=False)
 
@@ -93,16 +92,33 @@ def convertImage(imagePath, destDir=Path.cwd(), width=720):
     #ensure we are working with Path objects
     imagePath = getPath(imagePath)
     destDir = getPath(destDir)
-
-    #TODO create a new image object based on the current imagefile
     
-    #TODO Call function to resize image object
+    logger.debug(f"Loading in image {imagePath.name}")
+    myImage = Image.open(imagePath)
+    origWidth, origHeight = myImage.size
     
-    #TODO Save new image in destination dir
+    if origWidth < width:
+        logger.warning(f"Original image {str(imagePath)} was a width of {origWidth}, which is less than your target width of {width}. Proceeding anyway.")
+    destImage = myImage.copy()
+    
+    ratio = origHeight/origWidth
+    logger.debug(f"This image has a height and width of {origHeight} and {origWidth} repectively. So the ratio was calculated as {ratio}")
+    
+    height = round(width*ratio)
+    logger.debug(f"Attempting to resize image to width {type(width)} {width} and height{type(height)} {height}")
+    destImage = destImage.resize((int(width), int(height)))
+    
+    # Save the new image
+    destPath = destDir/imagePath.name
+    logger.debug(f"Have determined that the new image should be saved as {destPath}")
+    
+    if not destPath.parent.exists():
+        destPath.parent.mkdir(parents=True, exist_ok=True)
+    
+    destImage.save(destPath)
+    logger.info(f"Completed creating new image {str(destPath)}")
     
     logger.debug("Completed convertImage function")
-
-
 
 def convertDir(newWidth, source_Directory, dest_Directory=None, recursive=False):
     """
@@ -112,10 +128,12 @@ def convertDir(newWidth, source_Directory, dest_Directory=None, recursive=False)
     """
     logger.debug(f"Commenced convertImagesInDir function with:\nnewWidth: {newWidth}\nsource_Directory: {source_Directory}\ndestination_Directory: {dest_Directory}\nrecursive: {recursive}")
     
-    if dest_Directory is None:
-        logger.debug(f"No destination directory provided. Creating a new one off source directory")
-        dest_Directory = source_Directory/Path('/convertedImages')
+    source_Directory = getPath(source_Directory)
     
+    if dest_Directory is None:
+        logger.debug(f"No destination directory provided. Creating a new one off source directory {source_Directory}")
+        dest_Directory = source_Directory/Path('convertedImages')
+        logger.debug(f"The destination directory will be {dest_Directory}")
     
     for thisFolder, subFolders, filenames in os.walk(source_Directory):
         logger.debug(f"Walking through {source_Directory}. This folder is {thisFolder}. Sub-folders are \n{str(subFolders)}\nfilenames are {str(filenames)}")
