@@ -3,7 +3,6 @@ File reminding me of things still left to do.
 
 ## For Version 1.0
 - Go through the python documenting recommendations and ensure the module is documented correctly.
-- Run pyinstaller to get linux executable that can be used without python3 necessarily being installed.
 
 
 ## Future Improvement Ideas
